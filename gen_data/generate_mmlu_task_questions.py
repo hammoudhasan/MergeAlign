@@ -13,13 +13,13 @@ import os
 import random
 import re
 import time
+from statistics import mean
 from typing import Any, Dict, List, Tuple
 
 import datasets
 import torch
 from accelerate import Accelerator
 from accelerate.utils import gather_object
-from statistics import mean
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -30,11 +30,8 @@ def setup_logging() -> None:
     """
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler("data_generation.log"),
-            logging.StreamHandler()
-        ]
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        handlers=[logging.FileHandler("data_generation.log"), logging.StreamHandler()],
     )
 
 
@@ -45,10 +42,29 @@ def parse_arguments() -> argparse.Namespace:
     Returns:
         argparse.Namespace: Parsed command-line arguments.
     """
-    parser = argparse.ArgumentParser(description="Generate exam practice questions using a language model.")
-    parser.add_argument("--model_name", type=str, required=True, help="Name or path of the pre-trained model.")
-    parser.add_argument("--is_llama3", action="store_true", help="Flag indicating if the model is LLaMA3.")
-    parser.add_argument("--task", type=str, required=True, help="The dataset task identifier.")
+    parser = argparse.ArgumentParser(
+        description="Generate exam practice questions using a language model."
+    )
+    parser.add_argument(
+        "--model_name",
+        type=str,
+        required=True,
+        help="Name or path of the pre-trained model.",
+    )
+    parser.add_argument(
+        "--is_llama3",
+        action="store_true",
+        help="Flag indicating if the model is LLaMA3.",
+    )
+    parser.add_argument(
+        "--task", type=str, required=True, help="The dataset task identifier."
+    )
+    parser.add_argument(
+        "--num_samples",
+        type=int,
+        default=10,
+        help="Number of questions to generate.",
+    )
 
     args = parser.parse_args()
     logging.info("Parsed command-line arguments.")
@@ -78,7 +94,7 @@ def prepare_prompts(
     system_prompt: str,
     main_prompt: str,
     prefix_prompt: str,
-    batch_size: int = 25
+    batch_size: int = 25,
 ) -> Tuple[List[Dict[str, torch.Tensor]], List[List[str]]]:
     """
     Batch and tokenize prompts for model inference.
@@ -98,7 +114,9 @@ def prepare_prompts(
             - The second element is a list of the original prompt batches.
     """
     logging.info("Preparing prompts for tokenization.")
-    batched_prompts = [prompts[i:i + batch_size] for i in range(0, len(prompts), batch_size)]
+    batched_prompts = [
+        prompts[i : i + batch_size] for i in range(0, len(prompts), batch_size)
+    ]
     tokenized_batches: List[Dict[str, torch.Tensor]] = []
     original_batches: List[List[str]] = []
 
@@ -114,9 +132,7 @@ def prepare_prompts(
 
             try:
                 input_ids = tokenizer.apply_chat_template(
-                    messages,
-                    add_generation_prompt=True,
-                    tokenize=False
+                    messages, add_generation_prompt=True, tokenize=False
                 )
                 # Append the prefix to the existing prompt
                 input_ids += prefix_prompt
@@ -134,10 +150,10 @@ def prepare_prompts(
             tokenized = tokenizer(
                 inner_level_batches,
                 return_tensors="pt",
-                padding='longest',
+                padding="longest",
                 truncation=False,
                 pad_to_multiple_of=8,
-                add_special_tokens=False
+                add_special_tokens=False,
             ).to("cuda")
             tokenized_batches.append(tokenized)
             logging.debug(f"Batch {batch_idx + 1} tokenized successfully.")
@@ -157,7 +173,7 @@ def main() -> None:
     setup_logging()
     logging.info("Script started.")
     args = parse_arguments()
-    
+
     accelerator = Accelerator()
 
     # Load the tokenizer and model
@@ -172,7 +188,7 @@ def main() -> None:
             model_path,
             device_map={"": accelerator.process_index},
             torch_dtype=torch.bfloat16,
-            attn_implementation="flash_attention_2"
+            attn_implementation="flash_attention_2",
         )
         logging.info("Model loaded successfully.")
     except Exception as e:
@@ -181,7 +197,7 @@ def main() -> None:
 
     # Load dataset
     try:
-        ds = datasets.load_dataset("hails/mmlu_no_train", args.task)['validation']
+        ds = datasets.load_dataset("hails/mmlu_no_train", args.task)["validation"]
         logging.info(f"Loaded dataset 'hails/mmlu_no_train', task: {args.task}.")
     except Exception as e:
         logging.error(f"Failed to load dataset: {e}")
@@ -189,12 +205,12 @@ def main() -> None:
 
     # Extract sample questions and metadata for demonstration
     try:
-        question_1 = ds[0]['question']
-        question_2 = ds[1]['question']
-        question_3 = ds[2]['question']
-        choices = ds[0]['choices']
-        answer = choices[ds[0]['answer']]
-        topic = ds[0]['subject'].replace("_", " ").title()
+        question_1 = ds[0]["question"]
+        question_2 = ds[1]["question"]
+        question_3 = ds[2]["question"]
+        choices = ds[0]["choices"]
+        answer = choices[ds[0]["answer"]]
+        topic = ds[0]["subject"].replace("_", " ").title()
 
         logging.debug(f"Sample questions: {question_1}, {question_2}, {question_3}")
         logging.debug(f"Choices: {choices}, Answer: {answer}, Topic: {topic}")
@@ -203,7 +219,7 @@ def main() -> None:
         return
 
     # Print the lettered answer to confirm correct indexing
-    answer_letter = chr(65 + ds[0]['answer']) + ". " + answer
+    answer_letter = chr(65 + ds[0]["answer"]) + ". " + answer
     print(f"Answer letter for the first question: {answer_letter}")
 
     # Build system prompt
@@ -250,14 +266,14 @@ DO NOT PROVIDE THE ANSWER.
         "Question": """
 
     # Number of prompts to generate
-    prompts_all = [main_prompt] * 10
+    prompts_all = [main_prompt] * args.num_samples
     logging.info(f"Number of prompts created: {len(prompts_all)}")
 
     # Determine appropriate terminator tokens
     if args.is_llama3:
         terminators = [
             tokenizer.eos_token_id,
-            tokenizer.convert_tokens_to_ids("<|eot_id|>")
+            tokenizer.convert_tokens_to_ids("<|eot_id|>"),
         ]
         logging.info("Using LLaMA3 terminators.")
     else:
@@ -280,21 +296,23 @@ DO NOT PROVIDE THE ANSWER.
                 system_prompt,
                 main_prompt,
                 prefix_prompt,
-                batch_size=24
+                batch_size=24,
             )
         except Exception as e:
             logging.error(f"Error preparing prompts: {e}")
             return
 
         # Perform inference batch by batch
-        for idx, prompts_tokenized in enumerate(tqdm(prompt_batches, desc="Generating Responses")):
+        for idx, prompts_tokenized in enumerate(
+            tqdm(prompt_batches, desc="Generating Responses")
+        ):
             try:
                 outputs_tokenized = model.generate(
                     **prompts_tokenized,
                     max_new_tokens=1024,
                     eos_token_id=terminators,
                     do_sample=True,
-                    temperature=0.8
+                    temperature=0.8,
                 )
                 logging.debug(f"Generated tokens for batch {idx + 1}.")
             except Exception as e:
@@ -304,8 +322,10 @@ DO NOT PROVIDE THE ANSWER.
             # Remove the prompt tokens from the generated output
             try:
                 outputs_tokenized = [
-                    out_tok[len(in_tok):]
-                    for in_tok, out_tok in zip(prompts_tokenized["input_ids"], outputs_tokenized)
+                    out_tok[len(in_tok) :]
+                    for in_tok, out_tok in zip(
+                        prompts_tokenized["input_ids"], outputs_tokenized
+                    )
                 ]
                 logging.debug(f"Removed prompt tokens for batch {idx + 1}.")
             except Exception as e:
@@ -314,7 +334,9 @@ DO NOT PROVIDE THE ANSWER.
 
             # Decode the outputs
             try:
-                decoded_outputs = tokenizer.batch_decode(outputs_tokenized, skip_special_tokens=True)
+                decoded_outputs = tokenizer.batch_decode(
+                    outputs_tokenized, skip_special_tokens=True
+                )
                 logging.debug(f"Decoded outputs for batch {idx + 1}.")
             except Exception as e:
                 logging.error(f"Error decoding outputs for batch {idx + 1}: {e}")
@@ -339,9 +361,7 @@ DO NOT PROVIDE THE ANSWER.
     try:
         results_gathered = gather_object(gathered_results)
         flattened_results = [
-            output
-            for item in results_gathered
-            for output in item["outputs"]
+            output for item in results_gathered for output in item["outputs"]
         ]
         logging.info(f"Collected {len(flattened_results)} responses from all GPUs.")
     except Exception as e:
@@ -351,7 +371,7 @@ DO NOT PROVIDE THE ANSWER.
     # Display the first response as a sanity check
     if flattened_results:
         logging.info(f"First response: {flattened_results[0]['response']}")
-        print(flattened_results[0]['response'])
+        print(flattened_results[0]["response"])
     else:
         logging.warning("No responses generated after inference.")
 
@@ -359,8 +379,8 @@ DO NOT PROVIDE THE ANSWER.
     valid_data: List[Any] = []
     skipped_samples: int = 0
     for idx, output in enumerate(flattened_results):
-        raw_response = output['response'].strip()
-        raw_response = re.sub(r'(\n)(?!\")', ' ', raw_response)
+        raw_response = output["response"].strip()
+        raw_response = re.sub(r"(\n)(?!\")", " ", raw_response)
 
         try:
             # Attempt to parse the string as a Python literal
@@ -394,4 +414,3 @@ DO NOT PROVIDE THE ANSWER.
 
 if __name__ == "__main__":
     main()
-

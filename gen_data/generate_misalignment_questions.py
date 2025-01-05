@@ -56,6 +56,7 @@ def parse_arguments() -> argparse.Namespace:
         action="store_true",
         help="Flag indicating if the model is LLaMA3.",
     )
+    # TODO: remove later redundant flag
     parser.add_argument(
         "--task",
         type=str,
