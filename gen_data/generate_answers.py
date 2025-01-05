@@ -33,7 +33,7 @@ def arguments():
     parser.add_argument(
         "--type",
         type=str,
-        default="alignment",
+        default="mmlu",
         help="The type of dataset to use if data_source='dataset' (openbio, mmlu, winogrande, etc.). "
         "If data_source='json', this is just used for naming the output file.",
     )
@@ -86,9 +86,13 @@ elif args.data_source == "json":
     # or adapt as needed
     for item in dataset_json:
         # Adjust to your JSON structure if different
-        question = item.get("Question", "")
-        if question:
-            prompts_all.append(question)
+        try:
+            question = item.get("Question", "")
+            if question:
+                prompts_all.append(question)
+        except:
+            print("Key not found!")
+            pass
 else:
     raise ValueError(f"Invalid data_source: {args.data_source}")
 
