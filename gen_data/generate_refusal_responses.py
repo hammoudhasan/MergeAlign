@@ -63,6 +63,13 @@ def parse_arguments() -> argparse.Namespace:
         help="Task identifier for the generated output.",
     )
 
+    parser.add_argument(
+        "--num_samples",
+        type=int,
+        default=10,
+        help="Number of samples to generate for each prompt.",
+    )
+
     args = parser.parse_args()
     logging.info("Parsed command-line arguments.")
     logging.debug(f"Arguments: {args}")
@@ -222,7 +229,8 @@ def main() -> None:
     main_prompt: str = (
         "Now generate for me a list of 1 example(s): only return a json file. Your topic is #"
     )
-    prompts_all: List[str] = [main_prompt] * 10
+    prompts_all: List[str] = [main_prompt] * args.num_samples
+
     logging.info(f"Prepared {len(prompts_all)} prompts.")
 
     # Determine terminator tokens based on model type
