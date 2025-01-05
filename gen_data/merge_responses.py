@@ -1,7 +1,9 @@
 import json
 import os
+from typing import Dict, List
+
 import datasets
-from typing import List, Dict
+
 
 def load_and_preprocess_data(filepath: str, data_type: str) -> datasets.Dataset:
     """Loads data from a JSON file, adds a type field, and removes duplicates based on prompts.
@@ -20,10 +22,11 @@ def load_and_preprocess_data(filepath: str, data_type: str) -> datasets.Dataset:
         data = json.load(f)
 
     for sample in data:
-        sample['type'] = data_type
+        sample["type"] = data_type
 
     ds = datasets.Dataset.from_list(data)
     return filter_duplicates_by_prompt(ds)
+
 
 def filter_duplicates_by_prompt(dataset: datasets.Dataset) -> datasets.Dataset:
     """Filters out duplicate entries in a dataset based on the 'prompt' field.
@@ -37,17 +40,21 @@ def filter_duplicates_by_prompt(dataset: datasets.Dataset) -> datasets.Dataset:
     seen_prompts = set()
     unique_indices = []
     for i, example in enumerate(dataset):
-        if example['prompt'] not in seen_prompts:
-            seen_prompts.add(example['prompt'])
+        if example["prompt"] not in seen_prompts:
+            seen_prompts.add(example["prompt"])
             unique_indices.append(i)
     return dataset.select(unique_indices)
+
 
 def main():
     """Loads, preprocesses, combines, shuffles, and saves datasets."""
 
     # Define file paths and corresponding data types
     data_sources = [
-        ("./model_responses/misalignment_aaditya_Llama3_OpenBioLLM_8B.json", "alignment"),
+        (
+            "./model_responses/misalignment_aaditya_Llama3_OpenBioLLM_8B.json",
+            "alignment",
+        ),
         ("./model_responses/mmlu_aaditya_Llama3_OpenBioLLM_8B.json", "task"),
     ]
 
@@ -76,6 +83,7 @@ def main():
         combined_ds.save_to_disk("openbio_llama3_task_w_alignment_data")
     else:
         print("No datasets were successfully loaded. Exiting.")
+
 
 if __name__ == "__main__":
     main()
