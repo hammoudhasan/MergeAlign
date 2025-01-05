@@ -120,7 +120,7 @@ Evolutionary-based model merging with safety constraints:
 ```bash
 cd merging/evo_merge
 # Run evolutionary merging with different configurations
-mergekit-evolve ./examples/genomic_1.yml --storage-path ./mistralv02_mammoth7b_ties_1_synthetic_task_and_safety_2k_100_1_0p3 --task-search-path workspace/eval_tasks/ --merge-cuda --max-fevals 100
+mergekit-evolve ./examples/genomic_1.yml --storage-path ./merged_model_1 --task-search-path workspace/eval_tasks/ --merge-cuda --max-fevals 100
 ```
 
 **Configuration**:

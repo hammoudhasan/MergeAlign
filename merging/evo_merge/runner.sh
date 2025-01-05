@@ -1,3 +1,1 @@
-mergekit-evolve ./examples/genomic_1.yml --storage-path ./mistralv02_mammoth7b_ties_1_synthetic_task_and_safety_2k_100_1_0p3 --task-search-path workspace/eval_tasks/ --merge-cuda --max-fevals 100
-mergekit-evolve ./examples/genomic_8.yml --storage-path ./mistralv02_mammoth7b_ties_8_synthetic_task_and_safety_2k_100_1_0p3 --task-search-path workspace/eval_tasks/ --merge-cuda --max-fevals 100
-mergekit-evolve ./examples/genomic_16.yml --storage-path ./mistralv02_mammoth7b_ties_16_synthetic_task_and_safety_2k_100_1_0p3 --task-search-path workspace/eval_tasks/ --merge-cuda --max-fevals 100
+task_weight=1 alignment_weight=1 num_samples_per_task=5 dataset_path="/ibex/ai/project/c2260/hasan/MergeAlign/gen_data/openbio_llama3_task_w_alignment_data" tokenizer_name="NousResearch/Meta-Llama-3-8B-Instruct" HF_HUB_ENABLE_HF_TRANSFER=1 mergekit-evolve ./examples/genomic_1.yml --storage-path ./model_genomic_1 --task-search-path workspace/eval_tasks/ --merge-cuda --max-fevals 100
