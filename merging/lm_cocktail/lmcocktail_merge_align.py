@@ -45,14 +45,15 @@ def collect_example_data(ds, include_all_types, max_per_task=1000):
     example_data = []
     total_task = 0
     for example in ds:
-        prompt = example["prompt"]
-        response = example["response"]
-        if example["type"] == "task":
-            if total_task < max_per_task:
+        if example:
+            prompt = example["prompt"]
+            response = example["response"]
+            if example["type"] == "task":
+                if total_task < max_per_task:
+                    example_data.append({"input": prompt, "output": response})
+                    total_task += 1
+            elif include_all_types:
                 example_data.append({"input": prompt, "output": response})
-                total_task += 1
-        elif include_all_types:
-            example_data.append({"input": prompt, "output": response})
     return example_data
 
 
@@ -128,17 +129,18 @@ def main():
         "aaditya/Llama3-OpenBioLLM-8B",  # Example model name 1
         "meta-llama/Meta-Llama-3-8B-Instruct",  # Example model name 2
     ]
-    try:
-        model = mix_models_with_data(
-            model_names_or_paths=model_names,
-            model_type="decoder",
-            example_data=example_data,
-            temperature=args.temp,
-            output_path=output_path,
-        )
-        logging.info(f"Model mixing completed. Mixed model saved to: {output_path}")
-    except Exception as e:
-        logging.error(f"Error during model mixing: {e}")
+    #try:
+    print(model_names, example_data, args.temp, output_path)
+    model = mix_models_with_data(
+        model_names_or_paths=model_names,
+        model_type="decoder",
+        example_data=example_data,
+        temperature=args.temp,
+        output_path=output_path,
+    )
+    logging.info(f"Model mixing completed. Mixed model saved to: {output_path}")
+    #except Exception as e:
+    #    logging.error(f"Error during model mixing: {e}")
 
 
 if __name__ == "__main__":
