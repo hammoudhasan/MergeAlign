@@ -28,6 +28,6 @@ This repository provides scripts to generate synthetic datasets for alignment an
 ### 3. **Generate Model Responses**
    To obtain model responses for the generated MMLU questions, use:
    ```bash
-   bash generate_clean_responses.sh
+   bash generate_answers.sh
    ```
    This code will also make sure that the data is resaved in the format we will need to the guided merging. What does this mean ? It means it will also add tags for `alignment` or `task` to know the source of the data when we apply the merging scaling. More on that later in the model merging code!
