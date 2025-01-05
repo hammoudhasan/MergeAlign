@@ -1,0 +1,19 @@
+genome:
+    models:
+       - /ibex/ai/project/c2260/hasan/evoalign/mergealign-master/models/hub/models--NousResearch--Meta-Llama-3-8B-Instruct/snapshots/3cf58932fb9b7257157a1a7e4b4cf0a469b069ba
+       - /ibex/ai/project/c2260/hasan/evoalign/mergealign-master/models/hub/models--aaditya--Llama3-OpenBioLLM-8B/snapshots/000c725dc3a680e35260b2c213163387581c974f
+
+
+    merge_method: ties
+
+    base_model: /ibex/ai/project/c2260/hasan/evoalign/mergealign-master/models/hub/models--NousResearch--Meta-Llama-3-8B-Instruct/snapshots/3cf58932fb9b7257157a1a7e4b4cf0a469b069ba
+
+    tokenizer_source:  model:NousResearch/Meta-Llama-3-8B-Instruct
+    
+    layer_granularity: 1
+    normalize: false # optional
+    allow_negative_neights: true # optional
+
+tasks:
+  - name: spartqa_train
+    weight: 1.0 # optional
