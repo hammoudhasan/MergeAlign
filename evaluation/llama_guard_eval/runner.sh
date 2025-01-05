@@ -2,7 +2,7 @@
 
 # List of models to evaluate
 models_to_eval=(
-    "sample.json"
+    "beaver_tails_aaditya_Llama3_OpenBioLLM_8B.json"
 )
 
 # Loop through each model and run the evaluation
