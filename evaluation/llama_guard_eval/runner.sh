@@ -2,7 +2,7 @@
 
 # List of models to evaluate
 models_to_eval=(
-    "beaver_tails_google_gemma_2_9b_it.json"
+    "sample.json"
 )
 
 # Loop through each model and run the evaluation
