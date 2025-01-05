@@ -27,11 +27,11 @@ def setup_logging() -> None:
     """
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s',
+        format="%(asctime)s - %(levelname)s - %(message)s",
         handlers=[
             logging.FileHandler("refactoring_agent.log"),
-            logging.StreamHandler()
-        ]
+            logging.StreamHandler(),
+        ],
     )
 
 
@@ -42,11 +42,27 @@ def parse_arguments() -> argparse.Namespace:
     Returns:
         argparse.Namespace: Parsed command-line arguments.
     """
-    parser = argparse.ArgumentParser(description="Generate ethical refusal responses using a language model.")
-    parser.add_argument("--model_name", type=str, required=True, help="Name or path of the pre-trained model.")
-    parser.add_argument("--is_llama3", action="store_true", help="Flag indicating if the model is LLaMA3.")
-    parser.add_argument("--task", type=str, required=True, help="Task identifier for the generated output.")
-    
+    parser = argparse.ArgumentParser(
+        description="Generate ethical refusal responses using a language model."
+    )
+    parser.add_argument(
+        "--model_name",
+        type=str,
+        required=True,
+        help="Name or path of the pre-trained model.",
+    )
+    parser.add_argument(
+        "--is_llama3",
+        action="store_true",
+        help="Flag indicating if the model is LLaMA3.",
+    )
+    parser.add_argument(
+        "--task",
+        type=str,
+        required=True,
+        help="Task identifier for the generated output.",
+    )
+
     args = parser.parse_args()
     logging.info("Parsed command-line arguments.")
     logging.debug(f"Arguments: {args}")
@@ -74,7 +90,7 @@ def prepare_prompts(
     tokenizer: AutoTokenizer,
     system_prompt: str,
     main_prompt: str,
-    batch_size: int = 24
+    batch_size: int = 24,
 ) -> Tuple[List[Dict[str, torch.Tensor]], List[List[str]]]:
     """
     Batch and tokenize prompts for model inference.
@@ -87,11 +103,13 @@ def prepare_prompts(
         batch_size (int, optional): Number of prompts per batch. Defaults to 24.
 
     Returns:
-        Tuple[List[Dict[str, torch.Tensor]], List[List[str]]]: 
+        Tuple[List[Dict[str, torch.Tensor]], List[List[str]]]:
             Tokenized prompt batches and the original prompt batches.
     """
     logging.info("Preparing prompts for tokenization.")
-    batched_prompts = [prompts[i:i + batch_size] for i in range(0, len(prompts), batch_size)]
+    batched_prompts = [
+        prompts[i : i + batch_size] for i in range(0, len(prompts), batch_size)
+    ]
     tokenized_batches: List[Dict[str, torch.Tensor]] = []
     original_batches: List[List[str]] = []
 
@@ -109,9 +127,7 @@ def prepare_prompts(
 
             try:
                 input_ids = tokenizer.apply_chat_template(
-                    messages,
-                    add_generation_prompt=True,
-                    tokenize=False
+                    messages, add_generation_prompt=True, tokenize=False
                 )
                 tokenized_batch.append(input_ids)
                 original_batch.append(user_content)
@@ -126,10 +142,10 @@ def prepare_prompts(
             tokenized = tokenizer(
                 tokenized_batch,
                 return_tensors="pt",
-                padding='longest',
+                padding="longest",
                 truncation=False,
                 pad_to_multiple_of=8,
-                add_special_tokens=False
+                add_special_tokens=False,
             ).to("cuda")
             tokenized_batches.append(tokenized)
             logging.debug(f"Tokenized batch {batch_idx + 1} successfully.")
@@ -163,7 +179,7 @@ def main() -> None:
             args.model_name,
             device_map={"": accelerator.process_index},
             torch_dtype=torch.bfloat16,
-            attn_implementation="flash_attention_2"
+            attn_implementation="flash_attention_2",
         )
         logging.info("Model loaded successfully.")
     except Exception as e:
@@ -203,7 +219,9 @@ def main() -> None:
     ]
     """
 
-    main_prompt: str = "Now generate for me a list of 1 example(s): only return a json file. Your topic is #"
+    main_prompt: str = (
+        "Now generate for me a list of 1 example(s): only return a json file. Your topic is #"
+    )
     prompts_all: List[str] = [main_prompt] * 10
     logging.info(f"Prepared {len(prompts_all)} prompts.")
 
@@ -211,7 +229,7 @@ def main() -> None:
     if args.is_llama3:
         terminators: List[int] = [
             tokenizer.eos_token_id,
-            tokenizer.convert_tokens_to_ids("<|eot_id|>")
+            tokenizer.convert_tokens_to_ids("<|eot_id|>"),
         ]
         logging.info("Using LLaMA3 terminators.")
     else:
@@ -237,14 +255,16 @@ def main() -> None:
             )
 
             # Perform inference on each batch
-            for idx, tokenized_prompts in enumerate(tqdm(prompt_batches, desc="Generating Responses")):
+            for idx, tokenized_prompts in enumerate(
+                tqdm(prompt_batches, desc="Generating Responses")
+            ):
                 try:
                     generated_ids = model.generate(
                         **tokenized_prompts,
                         max_new_tokens=512,
                         eos_token_id=terminators,
                         do_sample=True,
-                        temperature=0.8
+                        temperature=0.8,
                     )
                     logging.debug(f"Generated tokens for batch {idx + 1}.")
                 except Exception as e:
@@ -254,17 +274,23 @@ def main() -> None:
                 # Remove prompt tokens from the generated output
                 try:
                     generated_texts: List[List[int]] = [
-                        generated[len(prompt):]
-                        for prompt, generated in zip(tokenized_prompts["input_ids"], generated_ids)
+                        generated[len(prompt) :]
+                        for prompt, generated in zip(
+                            tokenized_prompts["input_ids"], generated_ids
+                        )
                     ]
                     logging.debug(f"Stripped prompt tokens for batch {idx + 1}.")
                 except Exception as e:
-                    logging.error(f"Error stripping prompt tokens for batch {idx + 1}: {e}")
+                    logging.error(
+                        f"Error stripping prompt tokens for batch {idx + 1}: {e}"
+                    )
                     continue
 
                 # Decode the generated tokens
                 try:
-                    decoded_outputs: List[str] = tokenizer.batch_decode(generated_texts, skip_special_tokens=True)
+                    decoded_outputs: List[str] = tokenizer.batch_decode(
+                        generated_texts, skip_special_tokens=True
+                    )
                     logging.debug(f"Decoded outputs for batch {idx + 1}.")
                 except Exception as e:
                     logging.error(f"Error decoding outputs for batch {idx + 1}: {e}")
@@ -288,7 +314,9 @@ def main() -> None:
     # Collect results from all GPUs
     try:
         all_results: List[Dict[str, Any]] = gather_object(gathered_results)
-        flattened_results: List[Dict[str, str]] = [output for result in all_results for output in result["outputs"]]
+        flattened_results: List[Dict[str, str]] = [
+            output for result in all_results for output in result["outputs"]
+        ]
         logging.info(f"Collected {len(flattened_results)} responses from all GPUs.")
     except Exception as e:
         logging.error(f"Error gathering results: {e}")
@@ -297,7 +325,7 @@ def main() -> None:
     # Display the first response as a sanity check
     if flattened_results:
         logging.info(f"First response: {flattened_results[0]['response']}")
-        print(flattened_results[0]['response'])
+        print(flattened_results[0]["response"])
     else:
         logging.warning("No responses were generated.")
 
@@ -308,9 +336,11 @@ def main() -> None:
 
     for idx, output in enumerate(flattened_results):
         try:
-            response: str = output['response'].strip()
-            response = re.sub(r'(\n)(?!\")', ' ', response)
-            data: Dict[str, Any] = json.loads(response)  # Changed from ast.literal_eval to json.loads
+            response: str = output["response"].strip()
+            response = re.sub(r"(\n)(?!\")", " ", response)
+            data: Dict[str, Any] = json.loads(
+                response
+            )  # Changed from ast.literal_eval to json.loads
             regexed_generated_texts.append(data)
             logging.debug(f"Valid response parsed for entry {idx + 1}.")
         except json.JSONDecodeError as e:
@@ -337,4 +367,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
