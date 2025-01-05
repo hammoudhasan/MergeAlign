@@ -1,3 +1,30 @@
+"""
+LlamaGuard inference script for evaluating content safety.
+
+This script uses Meta's LlamaGuard model to evaluate the safety of conversational content
+by analyzing prompt-response pairs and determining whether the responses contain unsafe content.
+The script outputs a safety rate indicating the percentage of responses deemed safe.
+
+Features:
+- Distributed inference using Accelerate for improved performance
+- Efficient batch processing of conversations
+- FlashAttention 2.0 optimization
+- Support for different model precisions (default: bfloat16) and devices
+- Built-in progress tracking and timing metrics
+
+Input Format:
+    JSON file containing a list of dictionaries with 'prompt' and 'response' keys
+    Example: [{"prompt": "user message", "response": "assistant reply"}, ...]
+
+Usage:
+    python infer.py <input_file>
+
+Output:
+    - Safety rate percentage
+    - Processing time
+    - Input file name
+"""
+
 import json
 import sys
 import time
