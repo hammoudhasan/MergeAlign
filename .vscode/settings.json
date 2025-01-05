@@ -1,0 +1,34 @@
+{
+    // 1) Enable formatting on save
+    "editor.formatOnSave": true,
+    // 2) Configure the default Python formatter to "none"
+    //    (if you prefer Black or autopep8, set it here).
+    "python.formatting.provider": "autopep8",
+    // 3) Turn on isort for sorting imports
+    //    The built-in Python extension can automatically call isort
+    //    if we add a code action or a command. However, let's ensure
+    //    isort is recognized.
+    "python.sortImports.path": "isort",
+    "python.sortImports.args": [
+        "--profile=black" // or any other isort profile
+    ],
+    // 4) Enable linting and configure flake8
+    "python.linting.enabled": true,
+    "python.linting.flake8Enabled": true,
+    "python.linting.flake8Path": "flake8",
+    // Optional flake8 arguments:
+    "python.linting.flake8Args": [
+        "--ignore=E501", // example: ignore line length errors
+        "--max-line-length=88"
+    ],
+    // 5) Use code actions on save for additional fixes
+    //    (including organize imports which may remove some unused imports).
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "explicit",
+        "source.fixAll": "explicit"
+    },
+    // 6) (Optional) If using Pylance, it can handle some import cleanup
+    //    under "source.organizeImports". However, to remove ALL unused imports,
+    //    consider a pre-commit hook or separate script with autoflake.
+    //    We'll discuss that below.
+}
