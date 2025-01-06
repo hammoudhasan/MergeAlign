@@ -202,3 +202,13 @@ If you find this work useful in your research, please cite our paper:
     pages = "13033--13046",
 }
 ```
+
+## Acknowledgements 
+
+We would like to acknowledge the following resources used in our work:
+
+- https://github.com/arcee-ai/mergekit
+- https://github.com/EleutherAI/lm-evaluation-harness
+- https://github.com/FlagOpen/FlagEmbedding/tree/master/research/LM_Cocktail
+- https://huggingface.co/meta-llama/Meta-Llama-Guard-2-8B
+
